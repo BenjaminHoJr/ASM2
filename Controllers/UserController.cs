@@ -98,7 +98,7 @@ public class UserController : ControllerBase
             return NotFound();
         }
 
-        return PutSuccess();
+        return NoContent();
     }
 
     // DELETE: api/User/5
@@ -112,6 +112,6 @@ public class UserController : ControllerBase
         _context.Users.Remove(user);
         await _context.SaveChangesAsync();
 
-        return DeleteSuccess();
+        return NoContent();
     }
 }
