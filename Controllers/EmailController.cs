@@ -13,8 +13,8 @@ public class EmailController : ControllerBase
     public async Task<IActionResult> SendToMe()
     {
         // thay bằng email bạn muốn nhận
-        var myEmail = "phuochuynh.03022006@gmail.com";
-        await _email.SendEmailAsync(myEmail, "Hơi thở của Nước", "<p>Đây là email từ lab 4 nè</p>");
+        var myEmail = "benjaminhojr@gmail.com";
+        await _email.SendEmailAsync(myEmail, "Hơi thở của Rồng", "<p>Đây là email</p>");
         return Ok(new { status = "sent" });
     }
 }

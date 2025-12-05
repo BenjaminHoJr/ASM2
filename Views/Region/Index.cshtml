@@ -1,0 +1,44 @@
+@model IEnumerable<WebApplication1.Models.Region>
+
+@{
+    ViewData["Title"] = "Region Index";
+}
+
+<h1>@ViewData[index: "Title"]</h1>
+
+@if (TempData["SuccessMessage"] != null)
+{
+    <div class="alert alert-success" role="alert">@TempData["SuccessMessage"]</div>
+}
+
+@if (TempData["ErrorMessage"] != null)
+{
+    <div class="alert alert-danger" role="alert">@TempData["ErrorMessage"]</div>
+}
+
+<p>
+    <a asp-action="Create" class="btn btn-primary">Create New Region</a>
+</p>
+
+<table class="table">
+    <thead>
+        <tr>
+            <th>Region ID</th>
+            <th>Region Name</th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var region in Model)
+        {
+            <tr>
+                <td>@region.regionId</td>
+                <td>@region.regionName</td>
+                <td>
+                    <a asp-action="Edit" asp-route-id="@region.regionId" class="btn btn-sm btn-warning me-1">Edit</a>
+                    <a asp-action="Delete" asp-route-id="@region.regionId" class="btn btn-sm btn-danger">Delete</a>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>

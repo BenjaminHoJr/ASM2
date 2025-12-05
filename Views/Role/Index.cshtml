@@ -1,0 +1,47 @@
+﻿@using Microsoft.EntityFrameworkCore.Metadata.Internal
+@*
+    For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
+*@
+@model IEnumerable<WebApplication1.Models.Role>
+@{
+    ViewData["Title"] = "Role Index";
+}
+<h1>@ViewData[index: "Title"]</h1>
+
+@if (TempData["SuccessMessage"] != null)
+{
+    <div class="alert alert-success" role="alert">@TempData["SuccessMessage"]</div>
+}
+
+@if (TempData["ErrorMessage"] != null)
+{
+    <div class="alert alert-danger" role="alert">@TempData["ErrorMessage"]</div>
+}
+
+@if (!ViewData.ModelState.IsValid)
+{
+    <div class="alert alert-danger">@Html.ValidationSummary()</div>
+}
+<table class="table">
+    <thead>
+        <tr>
+            <th>Role ID</th>
+            <th>Role Name</th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var role in Model)
+        {
+            <tr>
+                <td>@role.roleId</td>
+                <td>@role.RoleName</td>
+                <td>
+                    <a asp-action="Edit" asp-route-id="@role.roleId" class="btn btn-sm btn-warning me-1">Edit</a>
+                    <a asp-action="Delete" asp-route-id="@role.roleId" class="btn btn-sm btn-danger me-1">Delete</a>
+                    <a asp-action="Create" class="btn btn-sm btn-primary">Create</a>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
