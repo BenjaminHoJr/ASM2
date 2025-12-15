@@ -1,0 +1,265 @@
+@{
+    Layout = "_AdminLayout";
+    ViewData["Title"] = "Dashboard";
+}
+
+<!-- Stats Cards -->
+<div class="row g-4 mb-4">
+    <div class="col-md-3">
+        <div class="stat-card">
+            <div class="d-flex justify-content-between align-items-start">
+                <div>
+                    <p>Total Players</p>
+                    <h3 id="totalPlayers">-</h3>
+                    <small class="text-success"><i class="bi bi-arrow-up"></i> Active users</small>
+                </div>
+                <div class="icon primary">
+                    <i class="bi bi-people-fill"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stat-card">
+            <div class="d-flex justify-content-between align-items-start">
+                <div>
+                    <p>Total Items</p>
+                    <h3 id="totalItems">-</h3>
+                    <small class="text-muted">In shop</small>
+                </div>
+                <div class="icon success">
+                    <i class="bi bi-box-seam-fill"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stat-card">
+            <div class="d-flex justify-content-between align-items-start">
+                <div>
+                    <p>Transactions</p>
+                    <h3 id="totalTransactions">-</h3>
+                    <small class="text-muted">All time</small>
+                </div>
+                <div class="icon warning">
+                    <i class="bi bi-receipt"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stat-card">
+            <div class="d-flex justify-content-between align-items-start">
+                <div>
+                    <p>Resources</p>
+                    <h3 id="totalResources">-</h3>
+                    <small class="text-muted">Types available</small>
+                </div>
+                <div class="icon danger">
+                    <i class="bi bi-gem"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4">
+    <!-- Top Items Chart -->
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <span><i class="bi bi-bar-chart-fill me-2"></i>Top Purchased Items</span>
+                <a href="/Admin/Items" class="btn btn-sm btn-primary">View All</a>
+            </div>
+            <div class="card-body">
+                <canvas id="topItemsChart" height="100"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Player Stats -->
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <i class="bi bi-pie-chart-fill me-2"></i>Players by Mode
+            </div>
+            <div class="card-body">
+                <canvas id="playerModeChart"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4 mt-2">
+    <!-- Recent Transactions -->
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <span><i class="bi bi-clock-history me-2"></i>Recent Transactions</span>
+                <a href="/Admin/Transactions" class="btn btn-sm btn-outline-primary">View All</a>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead>
+                            <tr>
+                                <th>Player</th>
+                                <th>Item</th>
+                                <th>Type</th>
+                                <th>Time</th>
+                            </tr>
+                        </thead>
+                        <tbody id="recentTransactions">
+                            <tr><td colspan="4" class="text-center py-4">Loading...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <i class="bi bi-lightning-fill me-2"></i>Quick Actions
+            </div>
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-6">
+                        <a href="/Admin/Items" class="btn btn-outline-primary w-100 py-3">
+                            <i class="bi bi-plus-lg d-block fs-4"></i>
+                            Add New Item
+                        </a>
+                    </div>
+                    <div class="col-6">
+                        <a href="/Admin/Players" class="btn btn-outline-success w-100 py-3">
+                            <i class="bi bi-person-plus d-block fs-4"></i>
+                            Manage Players
+                        </a>
+                    </div>
+                    <div class="col-6">
+                        <a href="/swagger" target="_blank" class="btn btn-outline-info w-100 py-3">
+                            <i class="bi bi-braces d-block fs-4"></i>
+                            API Swagger
+                        </a>
+                    </div>
+                    <div class="col-6">
+                        <a href="/Admin/ApiDocs" class="btn btn-outline-warning w-100 py-3">
+                            <i class="bi bi-book d-block fs-4"></i>
+                            API Docs
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+    const API_BASE = '';
+
+    async function loadDashboard() {
+        try {
+            // Load resources
+            const resources = await fetch(`${API_BASE}/api/gameapi/resources`).then(r => r.json());
+            document.getElementById('totalResources').textContent = resources.length;
+
+            // Load top items
+            const topItems = await fetch(`${API_BASE}/api/gameapi/items/top-purchased?top=10`).then(r => r.json());
+            document.getElementById('totalTransactions').textContent = topItems.reduce((a, b) => a + b.count, 0);
+            
+            // Get all items count
+            const itemsCount = topItems.length > 0 ? Math.max(...topItems.map(i => i.itemId)) : 6;
+            document.getElementById('totalItems').textContent = itemsCount;
+
+            // Load purchase counts for players
+            const purchaseCounts = await fetch(`${API_BASE}/api/gameapi/players/purchase-counts`).then(r => r.json());
+            document.getElementById('totalPlayers').textContent = purchaseCounts.length || 3;
+
+            // Render charts
+            renderTopItemsChart(topItems);
+            renderPlayerModeChart(purchaseCounts);
+            renderRecentTransactions(purchaseCounts, topItems);
+
+        } catch (err) {
+            console.error('Dashboard load error:', err);
+        }
+    }
+
+    function renderTopItemsChart(items) {
+        const ctx = document.getElementById('topItemsChart').getContext('2d');
+        new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: items.map(i => i.item?.name || `Item ${i.itemId}`),
+                datasets: [{
+                    label: 'Purchases',
+                    data: items.map(i => i.count),
+                    backgroundColor: [
+                        'rgba(99, 102, 241, 0.8)',
+                        'rgba(16, 185, 129, 0.8)',
+                        'rgba(245, 158, 11, 0.8)',
+                        'rgba(239, 68, 68, 0.8)',
+                        'rgba(139, 92, 246, 0.8)'
+                    ],
+                    borderRadius: 8
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: { legend: { display: false } },
+                scales: { y: { beginAtZero: true } }
+            }
+        });
+    }
+
+    function renderPlayerModeChart(players) {
+        const modes = {};
+        players.forEach(p => {
+            const mode = p.player?.mode || 'Unknown';
+            modes[mode] = (modes[mode] || 0) + 1;
+        });
+
+        const ctx = document.getElementById('playerModeChart').getContext('2d');
+        new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+                labels: Object.keys(modes),
+                datasets: [{
+                    data: Object.values(modes),
+                    backgroundColor: ['#6366f1', '#10b981', '#f59e0b', '#ef4444']
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: { legend: { position: 'bottom' } }
+            }
+        });
+    }
+
+    function renderRecentTransactions(players, items) {
+        const tbody = document.getElementById('recentTransactions');
+        if (players.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="4" class="text-center py-4">No transactions</td></tr>';
+            return;
+        }
+
+        let html = '';
+        players.slice(0, 5).forEach(p => {
+            html += `
+                <tr>
+                    <td><strong>${p.player?.name || 'Player ' + p.playerId}</strong></td>
+                    <td>${items.find(i => i.item)?.item?.name || 'Various'}</td>
+                    <td><span class="badge bg-primary">Purchase</span></td>
+                    <td><small class="text-muted">${p.purchaseCount} orders</small></td>
+                </tr>
+            `;
+        });
+        tbody.innerHTML = html;
+    }
+
+    loadDashboard();
+</script>
+}

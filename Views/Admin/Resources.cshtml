@@ -1,0 +1,103 @@
+@{
+    Layout = "_AdminLayout";
+    ViewData["Title"] = "Game Resources";
+}
+
+<div class="row g-4" id="resourcesGrid">
+    <!-- Resources will be loaded here -->
+</div>
+
+<div class="row mt-5">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <i class="bi bi-info-circle me-2"></i>Resource Information
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>Resource</th>
+                                <th>Description</th>
+                                <th>API Endpoint</th>
+                            </tr>
+                        </thead>
+                        <tbody id="resourcesTable">
+                            <tr><td colspan="3" class="text-center">Loading...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+    const API_BASE = '';
+    const resourceIcons = {
+        'Gold': { icon: 'bi-coin', color: 'warning', gradient: 'linear-gradient(135deg, #f6d365 0%, #fda085 100%)' },
+        'Diamond': { icon: 'bi-gem', color: 'info', gradient: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' },
+        'XP': { icon: 'bi-star-fill', color: 'success', gradient: 'linear-gradient(135deg, #11998e 0%, #38ef7d 100%)' },
+        'Energy': { icon: 'bi-lightning-fill', color: 'danger', gradient: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)' }
+    };
+
+    async function loadResources() {
+        try {
+            const data = await fetch(`${API_BASE}/api/gameapi/resources`).then(r => r.json());
+            renderResourceCards(data);
+            renderResourceTable(data);
+        } catch (err) {
+            console.error(err);
+        }
+    }
+
+    function renderResourceCards(resources) {
+        const grid = document.getElementById('resourcesGrid');
+        
+        let html = '';
+        resources.forEach(r => {
+            const config = resourceIcons[r.name] || { icon: 'bi-box', color: 'secondary', gradient: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' };
+            
+            html += `
+                <div class="col-md-3">
+                    <div class="card h-100 border-0 shadow-sm overflow-hidden">
+                        <div class="card-body text-white text-center py-5" style="background: ${config.gradient}">
+                            <i class="bi ${config.icon} display-1 mb-3"></i>
+                            <h3 class="mb-0">${r.name}</h3>
+                        </div>
+                        <div class="card-footer bg-white text-center">
+                            <p class="text-muted mb-0 small">${r.description}</p>
+                        </div>
+                    </div>
+                </div>
+            `;
+        });
+        grid.innerHTML = html;
+    }
+
+    function renderResourceTable(resources) {
+        const tbody = document.getElementById('resourcesTable');
+        
+        let html = '';
+        resources.forEach(r => {
+            const config = resourceIcons[r.name] || { icon: 'bi-box', color: 'secondary' };
+            
+            html += `
+                <tr>
+                    <td>
+                        <i class="bi ${config.icon} text-${config.color} me-2"></i>
+                        <strong>${r.name}</strong>
+                    </td>
+                    <td>${r.description}</td>
+                    <td><code>GET /api/gameapi/resources</code></td>
+                </tr>
+            `;
+        });
+        tbody.innerHTML = html;
+    }
+
+    loadResources();
+</script>
+}

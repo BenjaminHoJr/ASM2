@@ -1,0 +1,272 @@
+@{
+    Layout = "_AdminLayout";
+    ViewData["Title"] = "Players Management";
+}
+
+<div class="row mb-4">
+    <div class="col-md-6">
+        <div class="input-group">
+            <span class="input-group-text"><i class="bi bi-search"></i></span>
+            <input type="text" class="form-control" id="searchPlayer" placeholder="Search players...">
+            <select class="form-select" id="filterMode" style="max-width: 200px;">
+                <option value="">All Modes</option>
+                <option value="Sinh tồn">Sinh tồn</option>
+                <option value="Đối kháng">Đối kháng</option>
+            </select>
+            <button class="btn btn-primary" onclick="loadPlayers()">
+                <i class="bi bi-filter"></i> Filter
+            </button>
+        </div>
+    </div>
+    <div class="col-md-6 text-end">
+        <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#addPlayerModal">
+            <i class="bi bi-plus-lg"></i> Add Player
+        </button>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <i class="bi bi-people-fill me-2"></i>All Players
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Name</th>
+                        <th>Mode</th>
+                        <th>Experience (XP)</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="playersTable">
+                    <tr><td colspan="5" class="text-center py-4">Loading...</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Player Stats -->
+<div class="row mt-4 g-4">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <i class="bi bi-cart-fill me-2"></i>Purchase History
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-sm mb-0">
+                        <thead>
+                            <tr>
+                                <th>Player</th>
+                                <th>Total Purchases</th>
+                            </tr>
+                        </thead>
+                        <tbody id="purchaseStats">
+                            <tr><td colspan="2" class="text-center py-3">Loading...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <i class="bi bi-box-seam me-2"></i>Affordable Items Check
+            </div>
+            <div class="card-body">
+                <div class="input-group mb-3">
+                    <span class="input-group-text">Player ID</span>
+                    <input type="number" class="form-control" id="checkPlayerId" value="1" min="1">
+                    <button class="btn btn-primary" onclick="checkAffordable()">
+                        <i class="bi bi-search"></i> Check
+                    </button>
+                </div>
+                <div id="affordableItems">
+                    <p class="text-muted">Select a player to see affordable items</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Change Password Modal -->
+<div class="modal fade" id="changePasswordModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Change Password</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="changePasswordPlayerId">
+                <div class="mb-3">
+                    <label class="form-label">New Password</label>
+                    <input type="password" class="form-control" id="newPassword" required>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" onclick="changePassword()">Update</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+    const API_BASE = '';
+
+    async function loadPlayers() {
+        const mode = document.getElementById('filterMode').value;
+        let url = `${API_BASE}/api/gameapi/players/purchase-counts`;
+        
+        if (mode) {
+            url = `${API_BASE}/api/gameapi/players/by-mode?mode=${encodeURIComponent(mode)}`;
+        }
+
+        try {
+            const data = await fetch(url).then(r => r.json());
+            renderPlayers(data, !!mode);
+        } catch (err) {
+            console.error(err);
+        }
+
+        // Load purchase stats
+        loadPurchaseStats();
+    }
+
+    function renderPlayers(data, isFiltered) {
+        const tbody = document.getElementById('playersTable');
+        
+        if (data.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="5" class="text-center py-4">No players found</td></tr>';
+            return;
+        }
+
+        let html = '';
+        data.forEach(item => {
+            const p = isFiltered ? item : item.player;
+            if (!p) return;
+            
+            html += `
+                <tr>
+                    <td><strong>#${p.id}</strong></td>
+                    <td>
+                        <div class="d-flex align-items-center">
+                            <div class="bg-primary rounded-circle text-white d-flex align-items-center justify-content-center me-2" style="width:36px;height:36px;">
+                                ${p.name.charAt(0)}
+                            </div>
+                            ${p.name}
+                        </div>
+                    </td>
+                    <td><span class="badge ${p.mode === 'Sinh tồn' ? 'bg-success' : 'bg-info'}">${p.mode}</span></td>
+                    <td>
+                        <div class="progress" style="height: 20px;">
+                            <div class="progress-bar bg-warning" style="width: ${Math.min(p.experience/10, 100)}%">
+                                ${p.experience} XP
+                            </div>
+                        </div>
+                    </td>
+                    <td>
+                        <button class="btn btn-sm btn-outline-primary me-1" onclick="showChangePassword(${p.id})">
+                            <i class="bi bi-key"></i>
+                        </button>
+                        <button class="btn btn-sm btn-outline-info" onclick="viewTransactions(${p.id})">
+                            <i class="bi bi-receipt"></i>
+                        </button>
+                    </td>
+                </tr>
+            `;
+        });
+        tbody.innerHTML = html;
+    }
+
+    async function loadPurchaseStats() {
+        try {
+            const data = await fetch(`${API_BASE}/api/gameapi/players/purchase-counts`).then(r => r.json());
+            const tbody = document.getElementById('purchaseStats');
+            
+            let html = '';
+            data.forEach(item => {
+                html += `
+                    <tr>
+                        <td>${item.player?.name || 'Player ' + item.playerId}</td>
+                        <td><span class="badge bg-primary">${item.purchaseCount} purchases</span></td>
+                    </tr>
+                `;
+            });
+            tbody.innerHTML = html || '<tr><td colspan="2">No data</td></tr>';
+        } catch (err) {
+            console.error(err);
+        }
+    }
+
+    async function checkAffordable() {
+        const playerId = document.getElementById('checkPlayerId').value;
+        try {
+            const data = await fetch(`${API_BASE}/api/gameapi/players/${playerId}/affordable-items`).then(r => r.json());
+            const div = document.getElementById('affordableItems');
+            
+            if (data.length === 0) {
+                div.innerHTML = '<p class="text-warning">No affordable items for this player</p>';
+                return;
+            }
+
+            let html = '<div class="list-group">';
+            data.forEach(item => {
+                html += `
+                    <div class="list-group-item d-flex justify-content-between align-items-center">
+                        <div>
+                            <strong>${item.name}</strong>
+                            <small class="text-muted d-block">${item.category}</small>
+                        </div>
+                        <span class="badge bg-success">${item.xpCost} XP</span>
+                    </div>
+                `;
+            });
+            html += '</div>';
+            div.innerHTML = html;
+        } catch (err) {
+            document.getElementById('affordableItems').innerHTML = '<p class="text-danger">Player not found</p>';
+        }
+    }
+
+    function showChangePassword(playerId) {
+        document.getElementById('changePasswordPlayerId').value = playerId;
+        new bootstrap.Modal(document.getElementById('changePasswordModal')).show();
+    }
+
+    async function changePassword() {
+        const playerId = document.getElementById('changePasswordPlayerId').value;
+        const newPassword = document.getElementById('newPassword').value;
+
+        try {
+            const resp = await fetch(`${API_BASE}/api/gameapi/players/${playerId}/password`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ newPassword })
+            });
+
+            if (resp.ok) {
+                alert('Password updated successfully!');
+                bootstrap.Modal.getInstance(document.getElementById('changePasswordModal')).hide();
+            } else {
+                alert('Failed to update password');
+            }
+        } catch (err) {
+            alert('Error: ' + err.message);
+        }
+    }
+
+    function viewTransactions(playerId) {
+        window.location.href = `/Admin/Transactions?playerId=${playerId}`;
+    }
+
+    loadPlayers();
+</script>
+}

@@ -1,0 +1,328 @@
+@{
+    Layout = "_AdminLayout";
+    ViewData["Title"] = "Items & Shop";
+}
+
+<div class="row mb-4">
+    <div class="col-md-6">
+        <div class="input-group">
+            <span class="input-group-text"><i class="bi bi-search"></i></span>
+            <input type="text" class="form-control" id="searchItem" placeholder="Search items...">
+            <select class="form-select" id="filterCategory" style="max-width: 180px;">
+                <option value="">All Categories</option>
+                <option value="Weapon">Weapon</option>
+                <option value="Armor">Armor</option>
+                <option value="Vehicle">Vehicle</option>
+                <option value="Accessory">Accessory</option>
+                <option value="Consumable">Consumable</option>
+            </select>
+        </div>
+    </div>
+    <div class="col-md-6 text-end">
+        <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#addItemModal">
+            <i class="bi bi-plus-lg"></i> Add New Item
+        </button>
+    </div>
+</div>
+
+<!-- Quick Filter Cards -->
+<div class="row g-3 mb-4">
+    <div class="col-md-4">
+        <div class="card border-primary cursor-pointer" onclick="loadWeaponsOver100()" style="cursor:pointer;">
+            <div class="card-body text-center">
+                <i class="bi bi-lightning-fill text-primary fs-1"></i>
+                <h6 class="mt-2 mb-0">Weapons > 100 XP</h6>
+                <small class="text-muted">API: /weapons/over-100xp</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card border-info cursor-pointer" onclick="loadDiamondItems()" style="cursor:pointer;">
+            <div class="card-body text-center">
+                <i class="bi bi-gem text-info fs-1"></i>
+                <h6 class="mt-2 mb-0">Diamond Items < 500 XP</h6>
+                <small class="text-muted">API: /items/kim-cuong-under-500xp</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card border-success cursor-pointer" onclick="loadTopPurchased()" style="cursor:pointer;">
+            <div class="card-body text-center">
+                <i class="bi bi-trophy-fill text-success fs-1"></i>
+                <h6 class="mt-2 mb-0">Top Purchased</h6>
+                <small class="text-muted">API: /items/top-purchased</small>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <span><i class="bi bi-box-seam-fill me-2"></i><span id="tableTitle">All Items</span></span>
+        <button class="btn btn-sm btn-outline-secondary" onclick="loadAllItems()">
+            <i class="bi bi-arrow-clockwise"></i> Reset
+        </button>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Name</th>
+                        <th>Category</th>
+                        <th>XP Cost</th>
+                        <th>Description</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="itemsTable">
+                    <tr><td colspan="6" class="text-center py-4">Loading...</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Add Item Modal -->
+<div class="modal fade" id="addItemModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title"><i class="bi bi-plus-lg me-2"></i>Add New Item</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label class="form-label">Item Name <span class="text-danger">*</span></label>
+                    <input type="text" class="form-control" id="itemName" required>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Category <span class="text-danger">*</span></label>
+                    <select class="form-select" id="itemCategory" required>
+                        <option value="Weapon">Weapon</option>
+                        <option value="Armor">Armor</option>
+                        <option value="Vehicle">Vehicle</option>
+                        <option value="Accessory">Accessory</option>
+                        <option value="Consumable">Consumable</option>
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">XP Cost <span class="text-danger">*</span></label>
+                    <input type="number" class="form-control" id="itemXpCost" min="1" required>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Description</label>
+                    <textarea class="form-control" id="itemDescription" rows="3"></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-success" onclick="createItem()">
+                    <i class="bi bi-check-lg"></i> Create Item
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+    const API_BASE = '';
+    let allItems = [];
+
+    async function loadAllItems() {
+        document.getElementById('tableTitle').textContent = 'All Items';
+        try {
+            const topItems = await fetch(`${API_BASE}/api/gameapi/items/top-purchased?top=20`).then(r => r.json());
+            allItems = topItems.filter(i => i.item).map(i => i.item);
+            
+            // Also try to load individual items by ID
+            for (let id = 1; id <= 10; id++) {
+                try {
+                    const item = await fetch(`${API_BASE}/api/gameapi/items/${id}`).then(r => {
+                        if (r.ok) return r.json();
+                        return null;
+                    });
+                    if (item && !allItems.find(i => i.id === item.id)) {
+                        allItems.push(item);
+                    }
+                } catch {}
+            }
+
+            renderItems(allItems);
+        } catch (err) {
+            console.error(err);
+        }
+    }
+
+    async function loadWeaponsOver100() {
+        document.getElementById('tableTitle').textContent = 'Weapons > 100 XP';
+        try {
+            const data = await fetch(`${API_BASE}/api/gameapi/weapons/over-100xp`).then(r => r.json());
+            renderItems(data);
+        } catch (err) {
+            console.error(err);
+        }
+    }
+
+    async function loadDiamondItems() {
+        document.getElementById('tableTitle').textContent = 'Diamond Items < 500 XP';
+        try {
+            const data = await fetch(`${API_BASE}/api/gameapi/items/kim-cuong-under-500xp`).then(r => r.json());
+            renderItems(data);
+        } catch (err) {
+            console.error(err);
+        }
+    }
+
+    async function loadTopPurchased() {
+        document.getElementById('tableTitle').textContent = 'Top Purchased Items';
+        try {
+            const data = await fetch(`${API_BASE}/api/gameapi/items/top-purchased?top=10`).then(r => r.json());
+            renderItemsWithCount(data);
+        } catch (err) {
+            console.error(err);
+        }
+    }
+
+    function renderItems(items) {
+        const tbody = document.getElementById('itemsTable');
+        
+        if (!items || items.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="6" class="text-center py-4">No items found</td></tr>';
+            return;
+        }
+
+        const categoryColors = {
+            'Weapon': 'danger',
+            'Armor': 'primary',
+            'Vehicle': 'warning',
+            'Accessory': 'info',
+            'Consumable': 'success'
+        };
+
+        let html = '';
+        items.forEach(item => {
+            const color = categoryColors[item.category] || 'secondary';
+            html += `
+                <tr>
+                    <td><strong>#${item.id}</strong></td>
+                    <td>
+                        <div class="d-flex align-items-center">
+                            <i class="bi bi-box-seam fs-4 text-${color} me-2"></i>
+                            <strong>${item.name}</strong>
+                        </div>
+                    </td>
+                    <td><span class="badge bg-${color}">${item.category}</span></td>
+                    <td><span class="badge bg-warning text-dark">${item.xpCost} XP</span></td>
+                    <td><small class="text-muted">${item.description || '-'}</small></td>
+                    <td>
+                        <button class="btn btn-sm btn-outline-primary me-1" onclick="viewItem(${item.id})">
+                            <i class="bi bi-eye"></i>
+                        </button>
+                        <button class="btn btn-sm btn-outline-danger">
+                            <i class="bi bi-trash"></i>
+                        </button>
+                    </td>
+                </tr>
+            `;
+        });
+        tbody.innerHTML = html;
+    }
+
+    function renderItemsWithCount(data) {
+        const tbody = document.getElementById('itemsTable');
+        
+        if (!data || data.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="6" class="text-center py-4">No items found</td></tr>';
+            return;
+        }
+
+        let html = '';
+        data.forEach((entry, index) => {
+            const item = entry.item;
+            if (!item) return;
+            
+            html += `
+                <tr>
+                    <td>
+                        <span class="badge bg-${index < 3 ? 'warning' : 'secondary'} fs-6">
+                            #${index + 1}
+                        </span>
+                    </td>
+                    <td><strong>${item.name}</strong></td>
+                    <td><span class="badge bg-primary">${item.category}</span></td>
+                    <td>${item.xpCost} XP</td>
+                    <td><span class="badge bg-success fs-6">${entry.count} purchases</span></td>
+                    <td>
+                        <button class="btn btn-sm btn-outline-primary" onclick="viewItem(${item.id})">
+                            <i class="bi bi-eye"></i>
+                        </button>
+                    </td>
+                </tr>
+            `;
+        });
+        tbody.innerHTML = html;
+    }
+
+    async function createItem() {
+        const item = {
+            name: document.getElementById('itemName').value,
+            category: document.getElementById('itemCategory').value,
+            xpCost: parseInt(document.getElementById('itemXpCost').value),
+            description: document.getElementById('itemDescription').value
+        };
+
+        if (!item.name || !item.xpCost) {
+            alert('Please fill in required fields');
+            return;
+        }
+
+        try {
+            const resp = await fetch(`${API_BASE}/api/gameapi/items`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(item)
+            });
+
+            if (resp.ok) {
+                const newItem = await resp.json();
+                alert(`Item "${newItem.name}" created successfully!`);
+                bootstrap.Modal.getInstance(document.getElementById('addItemModal')).hide();
+                loadAllItems();
+                
+                // Clear form
+                document.getElementById('itemName').value = '';
+                document.getElementById('itemXpCost').value = '';
+                document.getElementById('itemDescription').value = '';
+            } else {
+                alert('Failed to create item');
+            }
+        } catch (err) {
+            alert('Error: ' + err.message);
+        }
+    }
+
+    async function viewItem(id) {
+        try {
+            const item = await fetch(`${API_BASE}/api/gameapi/items/${id}`).then(r => r.json());
+            alert(`Item Details:\n\nName: ${item.name}\nCategory: ${item.category}\nCost: ${item.xpCost} XP\nDescription: ${item.description || 'N/A'}`);
+        } catch (err) {
+            alert('Item not found');
+        }
+    }
+
+    // Filter on input
+    document.getElementById('searchItem').addEventListener('input', function() {
+        const search = this.value.toLowerCase();
+        const filtered = allItems.filter(i => 
+            i.name.toLowerCase().includes(search) || 
+            i.category.toLowerCase().includes(search)
+        );
+        renderItems(filtered);
+    });
+
+    loadAllItems();
+</script>
+}

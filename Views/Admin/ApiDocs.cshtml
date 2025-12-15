@@ -1,0 +1,288 @@
+@{
+    Layout = "_AdminLayout";
+    ViewData["Title"] = "API Documentation";
+}
+
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="alert alert-info d-flex align-items-center">
+            <i class="bi bi-info-circle fs-4 me-3"></i>
+            <div>
+                <strong>Base URL:</strong> <code id="baseUrl"></code>
+                <br>
+                <small>All endpoints return JSON. Use Swagger UI for interactive testing.</small>
+            </div>
+            <a href="/swagger" target="_blank" class="btn btn-primary ms-auto">
+                <i class="bi bi-braces"></i> Open Swagger
+            </a>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4">
+    <!-- GET Endpoints -->
+    <div class="col-md-6">
+        <div class="card h-100">
+            <div class="card-header bg-success text-white">
+                <i class="bi bi-download me-2"></i>GET Endpoints
+            </div>
+            <div class="card-body p-0">
+                <div class="list-group list-group-flush">
+                    <div class="list-group-item">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div>
+                                <span class="badge bg-success me-2">GET</span>
+                                <strong>/api/gameapi/resources</strong>
+                            </div>
+                            <button class="btn btn-sm btn-outline-primary" onclick="testApi('/api/gameapi/resources')">Test</button>
+                        </div>
+                        <small class="text-muted">1. Lấy tất cả loại tài nguyên trong game</small>
+                    </div>
+                    
+                    <div class="list-group-item">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div>
+                                <span class="badge bg-success me-2">GET</span>
+                                <strong>/api/gameapi/players/by-mode?mode=</strong>
+                            </div>
+                            <button class="btn btn-sm btn-outline-primary" onclick="testApi('/api/gameapi/players/by-mode?mode=Sinh%20tồn')">Test</button>
+                        </div>
+                        <small class="text-muted">2. Lấy người chơi theo chế độ chơi</small>
+                    </div>
+                    
+                    <div class="list-group-item">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div>
+                                <span class="badge bg-success me-2">GET</span>
+                                <strong>/api/gameapi/weapons/over-100xp</strong>
+                            </div>
+                            <button class="btn btn-sm btn-outline-primary" onclick="testApi('/api/gameapi/weapons/over-100xp')">Test</button>
+                        </div>
+                        <small class="text-muted">3. Lấy vũ khí có giá trị > 100 XP</small>
+                    </div>
+                    
+                    <div class="list-group-item">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div>
+                                <span class="badge bg-success me-2">GET</span>
+                                <strong>/api/gameapi/players/{id}/affordable-items</strong>
+                            </div>
+                            <button class="btn btn-sm btn-outline-primary" onclick="testApi('/api/gameapi/players/1/affordable-items')">Test</button>
+                        </div>
+                        <small class="text-muted">4. Lấy items người chơi có thể mua với XP hiện tại</small>
+                    </div>
+                    
+                    <div class="list-group-item">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div>
+                                <span class="badge bg-success me-2">GET</span>
+                                <strong>/api/gameapi/items/kim-cuong-under-500xp</strong>
+                            </div>
+                            <button class="btn btn-sm btn-outline-primary" onclick="testApi('/api/gameapi/items/kim-cuong-under-500xp')">Test</button>
+                        </div>
+                        <small class="text-muted">5. Lấy items chứa "kim cương" và giá < 500 XP</small>
+                    </div>
+                    
+                    <div class="list-group-item">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div>
+                                <span class="badge bg-success me-2">GET</span>
+                                <strong>/api/gameapi/players/{id}/transactions</strong>
+                            </div>
+                            <button class="btn btn-sm btn-outline-primary" onclick="testApi('/api/gameapi/players/1/transactions')">Test</button>
+                        </div>
+                        <small class="text-muted">6. Lấy giao dịch của người chơi (sắp xếp theo thời gian)</small>
+                    </div>
+                    
+                    <div class="list-group-item">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div>
+                                <span class="badge bg-success me-2">GET</span>
+                                <strong>/api/gameapi/items/top-purchased</strong>
+                            </div>
+                            <button class="btn btn-sm btn-outline-primary" onclick="testApi('/api/gameapi/items/top-purchased?top=5')">Test</button>
+                        </div>
+                        <small class="text-muted">9. Lấy danh sách items được mua nhiều nhất</small>
+                    </div>
+                    
+                    <div class="list-group-item">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div>
+                                <span class="badge bg-success me-2">GET</span>
+                                <strong>/api/gameapi/players/purchase-counts</strong>
+                            </div>
+                            <button class="btn btn-sm btn-outline-primary" onclick="testApi('/api/gameapi/players/purchase-counts')">Test</button>
+                        </div>
+                        <small class="text-muted">10. Lấy danh sách người chơi và số lần mua hàng</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- POST/PATCH Endpoints -->
+    <div class="col-md-6">
+        <div class="card h-100">
+            <div class="card-header bg-primary text-white">
+                <i class="bi bi-upload me-2"></i>POST/PATCH Endpoints
+            </div>
+            <div class="card-body p-0">
+                <div class="list-group list-group-flush">
+                    <div class="list-group-item">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div>
+                                <span class="badge bg-warning text-dark me-2">POST</span>
+                                <strong>/api/gameapi/items</strong>
+                            </div>
+                        </div>
+                        <small class="text-muted">7. Thêm item mới</small>
+                        <pre class="bg-light p-2 mt-2 rounded small mb-0">{
+  "name": "string",
+  "category": "Weapon|Armor|Vehicle",
+  "xpCost": 100,
+  "description": "string"
+}</pre>
+                    </div>
+                    
+                    <div class="list-group-item">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div>
+                                <span class="badge bg-info me-2">PATCH</span>
+                                <strong>/api/gameapi/players/{id}/password</strong>
+                            </div>
+                        </div>
+                        <small class="text-muted">8. Cập nhật mật khẩu người chơi</small>
+                        <pre class="bg-light p-2 mt-2 rounded small mb-0">{
+  "newPassword": "string"
+}</pre>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- API Response Preview -->
+        <div class="card mt-4">
+            <div class="card-header">
+                <i class="bi bi-terminal me-2"></i>API Response
+            </div>
+            <div class="card-body">
+                <pre class="bg-dark text-light p-3 rounded" id="apiResponse" style="max-height: 300px; overflow: auto;">
+Click "Test" to see API response here
+                </pre>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- API Mapping Table -->
+<div class="card mt-4">
+    <div class="card-header">
+        <i class="bi bi-list-check me-2"></i>API Requirements Mapping
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-striped mb-0">
+                <thead class="table-dark">
+                    <tr>
+                        <th>#</th>
+                        <th>Requirement</th>
+                        <th>Method</th>
+                        <th>Endpoint</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>1</td>
+                        <td>Lấy thông tin tất cả các loại tài nguyên</td>
+                        <td><span class="badge bg-success">GET</span></td>
+                        <td><code>/api/gameapi/resources</code></td>
+                        <td><span class="badge bg-success">✓ Done</span></td>
+                    </tr>
+                    <tr>
+                        <td>2</td>
+                        <td>Lấy người chơi theo chế độ chơi</td>
+                        <td><span class="badge bg-success">GET</span></td>
+                        <td><code>/api/gameapi/players/by-mode?mode=</code></td>
+                        <td><span class="badge bg-success">✓ Done</span></td>
+                    </tr>
+                    <tr>
+                        <td>3</td>
+                        <td>Lấy vũ khí có giá trị > 100 XP</td>
+                        <td><span class="badge bg-success">GET</span></td>
+                        <td><code>/api/gameapi/weapons/over-100xp</code></td>
+                        <td><span class="badge bg-success">✓ Done</span></td>
+                    </tr>
+                    <tr>
+                        <td>4</td>
+                        <td>Lấy items người chơi có thể mua với XP hiện tại</td>
+                        <td><span class="badge bg-success">GET</span></td>
+                        <td><code>/api/gameapi/players/{id}/affordable-items</code></td>
+                        <td><span class="badge bg-success">✓ Done</span></td>
+                    </tr>
+                    <tr>
+                        <td>5</td>
+                        <td>Lấy items chứa "kim cương" và giá < 500 XP</td>
+                        <td><span class="badge bg-success">GET</span></td>
+                        <td><code>/api/gameapi/items/kim-cuong-under-500xp</code></td>
+                        <td><span class="badge bg-success">✓ Done</span></td>
+                    </tr>
+                    <tr>
+                        <td>6</td>
+                        <td>Lấy giao dịch của người chơi theo thời gian</td>
+                        <td><span class="badge bg-success">GET</span></td>
+                        <td><code>/api/gameapi/players/{id}/transactions</code></td>
+                        <td><span class="badge bg-success">✓ Done</span></td>
+                    </tr>
+                    <tr>
+                        <td>7</td>
+                        <td>Thêm item mới</td>
+                        <td><span class="badge bg-warning text-dark">POST</span></td>
+                        <td><code>/api/gameapi/items</code></td>
+                        <td><span class="badge bg-success">✓ Done</span></td>
+                    </tr>
+                    <tr>
+                        <td>8</td>
+                        <td>Cập nhật mật khẩu người chơi</td>
+                        <td><span class="badge bg-info">PATCH</span></td>
+                        <td><code>/api/gameapi/players/{id}/password</code></td>
+                        <td><span class="badge bg-success">✓ Done</span></td>
+                    </tr>
+                    <tr>
+                        <td>9</td>
+                        <td>Lấy items được mua nhiều nhất</td>
+                        <td><span class="badge bg-success">GET</span></td>
+                        <td><code>/api/gameapi/items/top-purchased</code></td>
+                        <td><span class="badge bg-success">✓ Done</span></td>
+                    </tr>
+                    <tr>
+                        <td>10</td>
+                        <td>Lấy người chơi và số lần mua hàng</td>
+                        <td><span class="badge bg-success">GET</span></td>
+                        <td><code>/api/gameapi/players/purchase-counts</code></td>
+                        <td><span class="badge bg-success">✓ Done</span></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+    document.getElementById('baseUrl').textContent = window.location.origin;
+
+    async function testApi(endpoint) {
+        const pre = document.getElementById('apiResponse');
+        pre.textContent = 'Loading...';
+        
+        try {
+            const resp = await fetch(endpoint);
+            const data = await resp.json();
+            pre.textContent = JSON.stringify(data, null, 2);
+        } catch (err) {
+            pre.textContent = 'Error: ' + err.message;
+        }
+    }
+</script>
+}
