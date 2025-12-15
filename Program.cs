@@ -17,6 +17,17 @@ builder.Services.AddControllersWithViews();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
+// CORS for deployment (allow all origins for demo, restrict in production)
+builder.Services.AddCors(options =>
+{
+    options.AddDefaultPolicy(policy =>
+    {
+        policy.AllowAnyOrigin()
+              .AllowAnyMethod()
+              .AllowAnyHeader();
+    });
+});
+
 // Configure Entity Framework Core with SQLite
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection")));
@@ -61,18 +72,17 @@ if (!app.Environment.IsDevelopment())
     app.UseExceptionHandler("/Home/Error");
     app.UseHsts();
 }
-else
+
+// Enable Swagger in all environments
+app.UseSwagger();
+app.UseSwaggerUI(c =>
 {
-    // Enable Swagger only in Development (move out if you want it in production)
-    app.UseSwagger();
-    app.UseSwaggerUI(c =>
-    {
-        c.RoutePrefix = "swagger"; // access at /swagger
-        c.DocumentTitle = "API Docs";
-    });
-}
+    c.RoutePrefix = "swagger";
+    c.DocumentTitle = "API Docs";
+});
 
 app.UseHttpsRedirection();
+app.UseCors();
 app.UseRouting();
 
 app.UseAuthentication(); // <- phải trước UseAuthorization

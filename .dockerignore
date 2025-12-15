@@ -1,0 +1,19 @@
+# Ignore build outputs
+bin/
+obj/
+
+# Ignore development configs
+appsettings.Development.json
+
+# IDE
+.vs/
+.vscode/
+*.user
+
+# Git
+.git/
+.gitignore
+
+# OS
+.DS_Store
+Thumbs.db
