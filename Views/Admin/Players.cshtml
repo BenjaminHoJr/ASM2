@@ -94,12 +94,87 @@
     </div>
 </div>
 
+<!-- Add Player Modal -->
+<div class="modal fade" id="addPlayerModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="bi bi-person-plus me-2"></i>Add New Player</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label class="form-label">Name</label>
+                    <input type="text" class="form-control" id="playerName" required>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Game Mode</label>
+                    <select class="form-select" id="playerMode">
+                        <option value="Sinh tồn">Sinh tồn</option>
+                        <option value="Đối kháng">Đối kháng</option>
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Initial XP</label>
+                    <input type="number" class="form-control" id="playerXp" value="100" min="0">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Password</label>
+                    <input type="password" class="form-control" id="playerPassword" required>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-success" onclick="createPlayer()">
+                    <i class="bi bi-plus-lg"></i> Create Player
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Player Modal -->
+<div class="modal fade" id="editPlayerModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="bi bi-pencil me-2"></i>Edit Player</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="editPlayerId">
+                <div class="mb-3">
+                    <label class="form-label">Name</label>
+                    <input type="text" class="form-control" id="editPlayerName" required>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Game Mode</label>
+                    <select class="form-select" id="editPlayerMode">
+                        <option value="Sinh tồn">Sinh tồn</option>
+                        <option value="Đối kháng">Đối kháng</option>
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Experience (XP)</label>
+                    <input type="number" class="form-control" id="editPlayerXp" min="0">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" onclick="updatePlayer()">
+                    <i class="bi bi-check-lg"></i> Save Changes
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- Change Password Modal -->
 <div class="modal fade" id="changePasswordModal" tabindex="-1">
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title">Change Password</h5>
+                <h5 class="modal-title"><i class="bi bi-key me-2"></i>Change Password</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body">
@@ -111,7 +186,9 @@
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                <button type="button" class="btn btn-primary" onclick="changePassword()">Update</button>
+                <button type="button" class="btn btn-primary" onclick="changePassword()">
+                    <i class="bi bi-check-lg"></i> Update Password
+                </button>
             </div>
         </div>
     </div>
@@ -123,15 +200,23 @@
 
     async function loadPlayers() {
         const mode = document.getElementById('filterMode').value;
-        let url = `${API_BASE}/api/gameapi/players/purchase-counts`;
+        const search = document.getElementById('searchPlayer').value.toLowerCase();
         
-        if (mode) {
-            url = `${API_BASE}/api/gameapi/players/by-mode?mode=${encodeURIComponent(mode)}`;
-        }
-
         try {
-            const data = await fetch(url).then(r => r.json());
-            renderPlayers(data, !!mode);
+            // Always load all players first
+            let data = await fetch(`${API_BASE}/api/gameapi/players`).then(r => r.json());
+            
+            // Filter by mode if selected
+            if (mode) {
+                data = data.filter(p => p.mode === mode);
+            }
+            
+            // Filter by search
+            if (search) {
+                data = data.filter(p => p.name.toLowerCase().includes(search));
+            }
+
+            renderPlayers(data);
         } catch (err) {
             console.error(err);
         }
@@ -140,7 +225,7 @@
         loadPurchaseStats();
     }
 
-    function renderPlayers(data, isFiltered) {
+    function renderPlayers(data) {
         const tbody = document.getElementById('playersTable');
         
         if (data.length === 0) {
@@ -149,10 +234,7 @@
         }
 
         let html = '';
-        data.forEach(item => {
-            const p = isFiltered ? item : item.player;
-            if (!p) return;
-            
+        data.forEach(p => {
             html += `
                 <tr>
                     <td><strong>#${p.id}</strong></td>
@@ -173,17 +255,131 @@
                         </div>
                     </td>
                     <td>
-                        <button class="btn btn-sm btn-outline-primary me-1" onclick="showChangePassword(${p.id})">
+                        <button class="btn btn-sm btn-outline-primary me-1 btn-edit" data-id="${p.id}" title="Edit">
+                            <i class="bi bi-pencil"></i>
+                        </button>
+                        <button class="btn btn-sm btn-outline-warning me-1 btn-password" data-id="${p.id}" title="Change Password">
                             <i class="bi bi-key"></i>
                         </button>
-                        <button class="btn btn-sm btn-outline-info" onclick="viewTransactions(${p.id})">
+                        <button class="btn btn-sm btn-outline-info me-1 btn-transactions" data-id="${p.id}" title="View Transactions">
                             <i class="bi bi-receipt"></i>
+                        </button>
+                        <button class="btn btn-sm btn-outline-danger btn-delete" data-id="${p.id}" title="Delete">
+                            <i class="bi bi-trash"></i>
                         </button>
                     </td>
                 </tr>
             `;
         });
         tbody.innerHTML = html;
+        
+        // Attach event listeners
+        tbody.querySelectorAll('.btn-edit').forEach(btn => {
+            btn.addEventListener('click', () => showEditPlayer(btn.dataset.id));
+        });
+        tbody.querySelectorAll('.btn-password').forEach(btn => {
+            btn.addEventListener('click', () => showChangePassword(btn.dataset.id));
+        });
+        tbody.querySelectorAll('.btn-transactions').forEach(btn => {
+            btn.addEventListener('click', () => viewTransactions(btn.dataset.id));
+        });
+        tbody.querySelectorAll('.btn-delete').forEach(btn => {
+            btn.addEventListener('click', () => deletePlayer(btn.dataset.id));
+        });
+    }
+
+    async function createPlayer() {
+        const name = document.getElementById('playerName').value;
+        const mode = document.getElementById('playerMode').value;
+        const experience = parseInt(document.getElementById('playerXp').value);
+        const password = document.getElementById('playerPassword').value;
+
+        if (!name || !password) {
+            alert('Please fill in all required fields');
+            return;
+        }
+
+        try {
+            const resp = await fetch(`${API_BASE}/api/gameapi/players`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name, mode, experience, password })
+            });
+
+            if (resp.ok) {
+                alert('Player created successfully!');
+                bootstrap.Modal.getInstance(document.getElementById('addPlayerModal')).hide();
+                document.getElementById('playerName').value = '';
+                document.getElementById('playerPassword').value = '';
+                loadPlayers();
+            } else {
+                const error = await resp.json();
+                alert('Error: ' + (error.title || 'Failed to create player'));
+            }
+        } catch (err) {
+            alert('Error: ' + err.message);
+        }
+    }
+
+    async function showEditPlayer(playerId) {
+        try {
+            const player = await fetch(`${API_BASE}/api/gameapi/players/${playerId}`).then(r => r.json());
+            document.getElementById('editPlayerId').value = player.id;
+            document.getElementById('editPlayerName').value = player.name;
+            document.getElementById('editPlayerMode').value = player.mode;
+            document.getElementById('editPlayerXp').value = player.experience;
+            new bootstrap.Modal(document.getElementById('editPlayerModal')).show();
+        } catch (err) {
+            alert('Player not found');
+        }
+    }
+
+    async function updatePlayer() {
+        const playerId = document.getElementById('editPlayerId').value;
+        const name = document.getElementById('editPlayerName').value;
+        const mode = document.getElementById('editPlayerMode').value;
+        const experience = parseInt(document.getElementById('editPlayerXp').value);
+
+        try {
+            const resp = await fetch(`${API_BASE}/api/gameapi/players/${playerId}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name, mode, experience })
+            });
+
+            if (resp.ok) {
+                alert('Player updated successfully!');
+                bootstrap.Modal.getInstance(document.getElementById('editPlayerModal')).hide();
+                loadPlayers();
+            } else {
+                alert('Failed to update player');
+            }
+        } catch (err) {
+            alert('Error: ' + err.message);
+        }
+    }
+
+    async function deletePlayer(playerId) {
+        if (!confirm('Are you sure you want to delete this player?')) return;
+
+        try {
+            const resp = await fetch(`${API_BASE}/api/gameapi/players/${playerId}`, {
+                method: 'DELETE'
+            });
+
+            console.log('Delete response status:', resp.status);
+
+            if (resp.status === 204 || resp.ok) {
+                alert('Player deleted successfully!');
+                loadPlayers();
+            } else {
+                const errorText = await resp.text();
+                alert('Failed to delete player: ' + (errorText || resp.status));
+            }
+        } catch (err) {
+            console.error('Delete error:', err);
+            alert('Error: ' + err.message);
+        }
     }
 
     async function loadPurchaseStats() {
@@ -255,6 +451,7 @@
             if (resp.ok) {
                 alert('Password updated successfully!');
                 bootstrap.Modal.getInstance(document.getElementById('changePasswordModal')).hide();
+                document.getElementById('newPassword').value = '';
             } else {
                 alert('Failed to update password');
             }
@@ -266,6 +463,11 @@
     function viewTransactions(playerId) {
         window.location.href = `/Admin/Transactions?playerId=${playerId}`;
     }
+
+    // Search on enter
+    document.getElementById('searchPlayer').addEventListener('keyup', function(e) {
+        if (e.key === 'Enter') loadPlayers();
+    });
 
     loadPlayers();
 </script>

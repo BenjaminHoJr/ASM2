@@ -162,26 +162,24 @@
 
     async function loadDashboard() {
         try {
+            // Load dashboard stats from new endpoint
+            const stats = await fetch(`${API_BASE}/api/gameapi/stats/dashboard`).then(r => r.json());
+            
+            document.getElementById('totalPlayers').textContent = stats.totalPlayers;
+            document.getElementById('totalItems').textContent = stats.totalItems;
+            document.getElementById('totalTransactions').textContent = stats.totalTransactions;
+
             // Load resources
             const resources = await fetch(`${API_BASE}/api/gameapi/resources`).then(r => r.json());
             document.getElementById('totalResources').textContent = resources.length;
 
             // Load top items
             const topItems = await fetch(`${API_BASE}/api/gameapi/items/top-purchased?top=10`).then(r => r.json());
-            document.getElementById('totalTransactions').textContent = topItems.reduce((a, b) => a + b.count, 0);
-            
-            // Get all items count
-            const itemsCount = topItems.length > 0 ? Math.max(...topItems.map(i => i.itemId)) : 6;
-            document.getElementById('totalItems').textContent = itemsCount;
-
-            // Load purchase counts for players
-            const purchaseCounts = await fetch(`${API_BASE}/api/gameapi/players/purchase-counts`).then(r => r.json());
-            document.getElementById('totalPlayers').textContent = purchaseCounts.length || 3;
 
             // Render charts
             renderTopItemsChart(topItems);
-            renderPlayerModeChart(purchaseCounts);
-            renderRecentTransactions(purchaseCounts, topItems);
+            renderPlayerModeChart(stats.playersByMode);
+            renderRecentTransactions(stats.recentTransactions);
 
         } catch (err) {
             console.error('Dashboard load error:', err);
@@ -215,20 +213,14 @@
         });
     }
 
-    function renderPlayerModeChart(players) {
-        const modes = {};
-        players.forEach(p => {
-            const mode = p.player?.mode || 'Unknown';
-            modes[mode] = (modes[mode] || 0) + 1;
-        });
-
+    function renderPlayerModeChart(playersByMode) {
         const ctx = document.getElementById('playerModeChart').getContext('2d');
         new Chart(ctx, {
             type: 'doughnut',
             data: {
-                labels: Object.keys(modes),
+                labels: playersByMode.map(p => p.mode),
                 datasets: [{
-                    data: Object.values(modes),
+                    data: playersByMode.map(p => p.count),
                     backgroundColor: ['#6366f1', '#10b981', '#f59e0b', '#ef4444']
                 }]
             },
@@ -239,25 +231,34 @@
         });
     }
 
-    function renderRecentTransactions(players, items) {
+    function renderRecentTransactions(transactions) {
         const tbody = document.getElementById('recentTransactions');
-        if (players.length === 0) {
+        if (!transactions || transactions.length === 0) {
             tbody.innerHTML = '<tr><td colspan="4" class="text-center py-4">No transactions</td></tr>';
             return;
         }
 
         let html = '';
-        players.slice(0, 5).forEach(p => {
+        transactions.forEach(t => {
+            const timeAgo = getTimeAgo(new Date(t.occurredAt));
             html += `
                 <tr>
-                    <td><strong>${p.player?.name || 'Player ' + p.playerId}</strong></td>
-                    <td>${items.find(i => i.item)?.item?.name || 'Various'}</td>
-                    <td><span class="badge bg-primary">Purchase</span></td>
-                    <td><small class="text-muted">${p.purchaseCount} orders</small></td>
+                    <td><strong>${t.playerName}</strong></td>
+                    <td>${t.itemName}</td>
+                    <td><span class="badge ${t.kind === 'Vehicle' ? 'bg-warning' : 'bg-primary'}">${t.kind}</span></td>
+                    <td><small class="text-muted">${timeAgo}</small></td>
                 </tr>
             `;
         });
         tbody.innerHTML = html;
+    }
+
+    function getTimeAgo(date) {
+        const seconds = Math.floor((new Date() - date) / 1000);
+        if (seconds < 60) return 'Just now';
+        if (seconds < 3600) return Math.floor(seconds / 60) + ' mins ago';
+        if (seconds < 86400) return Math.floor(seconds / 3600) + ' hours ago';
+        return Math.floor(seconds / 86400) + ' days ago';
     }
 
     loadDashboard();
